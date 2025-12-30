@@ -20,28 +20,56 @@ class MyEventEmitter {
   }
 
   off(eventName, listener) {
+    const listeners = this.events[eventName];
+
+    if (!listeners) {
+      return;
+    }
+
+    const idx = listeners.findIndex((obj) => obj.fn === listener);
+
+    if (idx !== -1) {
+      listeners.splice(idx, 1);
+    }
+
+    if (listeners.length === 0) {
+      delete this.events[eventName];
+    }
+  }
+
+  emit(eventName, ...args) {
     if (!this.events[eventName]) {
       return;
     }
 
-    this.events[eventName] = this.events[eventName].filter(
-      (obj) => obj.fn !== listener,
-    );
-  }
+    const listenersCopy = this.events[eventName].slice();
 
-  emit(eventName, ...args) {
-    if (this.events[eventName]) {
-      const listEvent = (this.events[eventName] || []).concat();
+    for (const obj of listenersCopy) {
+      if (!this.events[eventName]) {
+        break;
+      }
 
-      for (const obj of listEvent) {
-        if (obj && typeof obj.fn === 'function') {
-          obj.fn(...args);
+      // if (obj && typeof obj.fn === 'function') {
+      //   obj.fn(...args);
+      // }
+
+      obj.fn(...args);
+
+      if (obj.once) {
+        const currListeners = this.events[eventName];
+
+        if (!currListeners) {
+          break;
         }
 
-        if (obj.once === true) {
-          this.events[eventName] = this.events[eventName].filter(
-            (el) => el !== obj,
-          );
+        const idx = currListeners.indexOf(obj);
+
+        if (idx !== -1) {
+          currListeners.splice(idx, 1);
+        }
+
+        if (currListeners.length === 0) {
+          delete this.events[eventName];
         }
       }
     }
